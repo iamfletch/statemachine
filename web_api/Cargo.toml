@@ -1,0 +1,24 @@
+[package]
+name = "web_api"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+service = { path = "../service" }
+statemachine_grpc = { path = "../statemachine_grpc" }
+log = "0.4.20"
+
+actix-web = "4.4.0"
+actix-web-opentelemetry = { version = "0.15.0"}
+serde = { version = "1.0.188", features = ["derive"] }
+serde_json = "1.0.107"
+actix-cors = "0.6.4"
+tonic = "0.10.2"
+opentelemetry_api = "0.20.0"
+tracing = "0.1.37"
+tracing-subscriber = "0.3.17"
+tracing-opentelemetry = "0.21.0"
+opentelemetry-semantic-conventions = "0.12.0"
+thiserror = "1.0.49"

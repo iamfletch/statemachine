@@ -1,0 +1,16 @@
+[package]
+name = "statemachine"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+service = { path = "../service"}
+statemachine_grpc = { path = "../statemachine_grpc" }
+log = "0.4.20"
+tokio = { version = "1.4.0", features = ["full"] }
+tonic = "0.10.2"
+opentelemetry_api = "0.20.0"
+opentelemetry-semantic-conventions = "0.12.0"
+

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset=utf8>
+    <title>Statemachine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="editor.bundle.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="jumbotron">
+            <h1>Statemachine Tester</h1>
+            <p>Sends a single POST json request to the web_api, web_api will then forward the request onto the statemachine via grpc</p>
+          </div>
+        <div class="row">
+            <div class="col-sm-6"><h2>Request</h2></div>
+            <div class="col-sm-6"><h2>Response</h2></div>
+        </div>
+        <div class="row">
+            <div id="input" class="col-sm-6"></div>
+            <div id="output" class="col-sm-6"></div>
+            
+        </div>
+        <div class="row">
+            <button type="button" class="btn btn-secondary" id="sendBtn">Send</button>
+        </div>
+    </div>
+    <script type="text/javascript">
+        let btn = document.querySelector("#sendBtn")
+        document.querySelector("#input").addEventListener("validityChange", (e)=> {
+            if (e.detail.valid) {
+                btn.className="btn btn-success"
+                btn.removeAttribute("disabled")
+            } else {
+                btn.className="btn btn-danger"
+                btn.setAttribute("disabled", "disabled")
+            }
+        })
+        btn.addEventListener("click", editorBundle.send)
+        editorBundle.setup(document.querySelector("#input"), document.querySelector("#output"))
+    </script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+[env]
+OTEL_SERVICE_NAME="web_api"
