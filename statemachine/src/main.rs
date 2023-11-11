@@ -1,6 +1,6 @@
 use std::any::Any;
 use log::info;
-use service::telemetry::init_telemetry;
+use service::telemetry::{init_telemetry, init_tracing};
 use tonic::{transport::Server, Request, Response, Status};
 use statemachine_grpc::say_server::{Say, SayServer};
 use statemachine_grpc::{SayResponse, SayRequest};
@@ -8,6 +8,8 @@ use opentelemetry_api::{Context, global, KeyValue, propagation::Extractor, trace
 use opentelemetry_api::trace::{SpanKind, TraceContextExt, Tracer};
 use tonic::codegen::tokio_stream::StreamExt;
 use tonic::metadata::{KeyRef, MetadataMap};
+use tonic_tracing_opentelemetry::middleware::filters;
+use tonic_tracing_opentelemetry::middleware::server::OtelGrpcLayer;
 
 #[derive(Default)]
 pub struct MySay {}
@@ -27,7 +29,7 @@ impl Say for MySay {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    init_telemetry();
+    init_tracing();
 
     // defining address for our service
     let addr = "[::1]:50051".parse().unwrap();
@@ -36,7 +38,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Server listening on {}", addr);
     // adding our service to our server.
     Server::builder()
-        .add_service(SayServer::with_interceptor(say, intercept))
+        .layer(OtelGrpcLayer::default().filter(filters::reject_healthcheck))
+        .add_service(SayServer::new(say))
         .serve(addr)
         .await?;
     Ok(())

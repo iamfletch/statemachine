@@ -1,4 +1,4 @@
 [env]
-OTEL_SERVICE_NAME="web_ui"
+OTEL_SERVICE_NAME="sm-frontend"
 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317"
 RUST_LOG="info"

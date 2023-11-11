@@ -4,44 +4,55 @@ use actix_web::dev::PeerAddr;
 use actix_web::{HttpServer, App, Result, web, HttpResponse, HttpRequest};
 use actix_web::error::ErrorNotFound;
 use actix_web::middleware::Logger;
-use actix_web_opentelemetry::RequestTracing;
-use actix_web_opentelemetry::ClientExt;
 use awc::Client;
-use log::{debug, info};
+use log::{error, info, trace};
+use tracing_actix_web::TracingLogger;
+use tracing_awc::Tracing;
+use telemetry::{init_tracing};
+use tracing::info_span;
 
-use service::{telemetry::init_telemetry, config::CONFIG};
 use url::Url;
 
 async fn index() -> Result<NamedFile> {
-    let path: PathBuf = "web_ui/static/index.html".parse().unwrap();
+    let path: PathBuf = "static/index.html".parse().unwrap();
     Ok(NamedFile::open(path)?)
 }
 
 // TODO - think of a better location for this bundle
 async fn bundle() -> Result<NamedFile> {
-    let path: PathBuf = "web_ui/static/editor.bundle.js".parse().unwrap();
+    let path: PathBuf = "static/editor.bundle.js".parse().unwrap();
     Ok(NamedFile::open(path)?)
 }
 
-async fn forward(
+async fn forward_handler(
     req: HttpRequest,
     payload: web::Payload,
     peer_addr: Option<PeerAddr>,
     url: web::Data<Url>,
     client: web::Data<Client>,
 ) -> Result<HttpResponse, actix_web::Error> {
-    debug!("forwarding request to api");
+    let span = info_span!("forward_handler");
+    let _e = span.enter();
+
     let mut new_url = (**url).clone();
-    if let Some(path) = req.uri().path().strip_prefix("/api") {
+    let old_path = req.uri().path();
+    if let Some(path) = old_path.strip_prefix("/api") {
+        if path.len() == 0 {
+            error!("missing target api in path {old_path}");
+            return Err(ErrorNotFound("bad path"))
+        }
         new_url.set_path(path);
     } else {
+        error!("path must start with api {old_path}");
         return Err(ErrorNotFound("bad path"))
     }
     new_url.set_query(req.uri().query());
+    info!("redirecting {} -> {}", old_path, new_url.as_str());
 
     let forwarded_req = client
         .request_from(new_url.as_str(), req.head())
         .no_decompress();
+    trace!("build new client request");
 
     let forwarded_req = match peer_addr {
         Some(PeerAddr(addr)) => {
@@ -49,16 +60,18 @@ async fn forward(
         }
         None => forwarded_req,
     };
+    trace!("added x-forwarded-for");
 
+    info!("send request and await");
     let res = forwarded_req
-        .trace_request()
         .send_stream(payload)
         .await
         .map_err(actix_web::error::ErrorInternalServerError)?;
 
+    trace!("generate response stream");
     let mut client_resp = HttpResponse::build(res.status());
-    // Remove `Connection` as per
-    // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection#Directives
+
+    trace!("copy headers (except `Connection`)"); // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection#Directives
     for (header_name, header_value) in res.headers().iter().filter(|(h, _)| *h != "connection") {
         client_resp.insert_header((header_name.clone(), header_value.clone()));
     }
@@ -68,23 +81,28 @@ async fn forward(
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    init_telemetry();
+    init_tracing();
 
-    info!("Starting");
+    let span = info_span!("init").entered();
 
+    tracing::info!("Create forward URL for api");
     let forward_url = Url::parse("http://localhost:8081").unwrap();
+
+    span.exit();
 
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(Client::default()))
+            .app_data(web::Data::new(Client::builder()
+                .wrap(Tracing)
+                .finish()))
             .app_data(web::Data::new(forward_url.clone()))
             .wrap(Logger::default())
-            .wrap(RequestTracing::new())
+            .wrap(TracingLogger::default())
             .route("/", web::get().to( index))
             .route("/editor.bundle.js", web::get().to( bundle))
-            .service(web::scope("/api").default_service(web::to(forward)))
+            .service(web::scope("/api").default_service(web::to(forward_handler)))
     })
-        .bind(("127.0.0.1", CONFIG.ui_port))?
+        .bind(("127.0.0.1", 8080))?
         .run()
         .await
 }

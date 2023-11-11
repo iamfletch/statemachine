@@ -19,16 +19,14 @@ mod serde_stuff;
 pub struct Configuration {
     #[serde(deserialize_with="deserialize_level_filter", serialize_with="serialize_level_filter")]
     pub log_level: LevelFilter,
-    pub port: u16,
-    pub ui_port: u16
+    pub port: u16
 }
 
 impl Default for Configuration {
     fn default() -> Self {
         Configuration {
             log_level: LevelFilter::Info,
-            port: 8081,
-            ui_port: 8080
+            port: 8081
         }
     }
 }

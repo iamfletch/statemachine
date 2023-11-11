@@ -1,6 +1,13 @@
 [workspace]
-
+resolver = "2"
 members = [
+    # New
+    "http",
+    "telemetry",
+    "config",
+    "frontend",
+
+    # Old
     "service",
     "web_api",
     "web_ui",

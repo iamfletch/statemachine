@@ -1,0 +1,25 @@
+version: '3.7'
+services:
+  jaeger-aio: # https://www.jaegertracing.io/docs/1.50/deployment/
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger-aio
+    ports:
+      - "16686:16686"  # UI
+      - "4317:4317"  # GRPC otlp
+      - "4318:4318"  # HTTP otlp
+    expose:
+      - "16686"
+    environment:
+      COLLECTOR_OTLP_ENABLED: true
+    volumes:
+      - /tmp
+    networks:
+      - backend
+  nginx:
+    image: statemachine/nginx
+    build: ./nginx
+    ports:
+      - 80:80
+      - 443:443
+networks:
+  backend:

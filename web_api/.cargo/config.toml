@@ -1,2 +1,3 @@
 [env]
 OTEL_SERVICE_NAME="web_api"
+RUST_LOG="info"

@@ -7,6 +7,10 @@
       <sourceFolder url="file://$MODULE_DIR$/statemachine_grpc/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/web_api/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/web_ui/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/config/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/http/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/telemetry/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/frontend/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
